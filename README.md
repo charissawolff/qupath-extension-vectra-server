@@ -9,10 +9,13 @@ The QuPath extension was made for the Computational Immunology Group at Radboud 
 - Without access to the server, this extension WILL NOT BE USEFUL
 
 ## Installation
-1. Build the extension's shadow jar (See [Build the extension](#build-the-extension)). 
-2. Open QuPath v0.7.0, click on "Extensions > Manage extensions". Click on "Open Extension Directory". You'll be prompted to create a user directory if you don't already have one. A folder will then open. Drag the built jar from `build/libs/` into this folder. 
-3. Restart QuPath. 
+1. Download the latest `.jar` from the [Releases page](../../releases).
+1. Open QuPath v0.7.0, click on Extensions > Manage extensions. 
+2. Click on "Open Extension Directory". You'll be prompted to create a user directory if you don't already have one. A folder will then open. 
+3. Drag the downloaded jar file into that folder.
+4. Restart QuPath.
 
+Alternatively, you can build from source - see [Build the extension](#build-the-extension).
 ## Examples
 
 <img src="example-images/JPEG-and-TIFF.png" alt="Opening a slide as JPEG or TIFF" width="33%">
@@ -39,5 +42,10 @@ gradlew build shadowJar
 ```
 
 The built extension should be found inside `build/libs`.
-See [Installation](#installation) above for how to add it to QuPath.
+
+To install the build, do the following:
+1. Open QuPath v0.7.0, click on Extensions > Manage extensions. 
+2. Click on "Open Extension Directory". You'll be prompted to create a user directory if you don't already have one. A folder will then open. 
+3. Drag the built jar from `build/libs/` into this folder. 
+4. Restart QuPath. 
 ## License
