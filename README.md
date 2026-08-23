@@ -48,4 +48,25 @@ To install the build, do the following:
 2. Click on "Open Extension Directory". You'll be prompted to create a user directory if you don't already have one. A folder will then open. 
 3. Drag the built jar from `build/libs/` into this folder. 
 4. Restart QuPath. 
-## License
+
+## FAQ
+
+**Q: I get an error when opening a slide. What should I check first?**
+
+A: Confirm you have access to the server and that you're running QuPath v0.7.0.
+
+**Q: It takes forever to load the TIFF version of a single slide. Can this be done faster?**
+
+A: Not in this version. Once you open a specific slide, the next time it will open faster due to caching server side.
+
+**Q: I can not open any slides in TIFF format. The QuPath application crashes.**
+
+A: Make sure you provide enough memory for caching the tile images. The TIFF files can be rather large. You can do this by going to Settings > General and bumping the "Percentage memory for tile caching" up. It's also best to close any other apps you might be using on the computer.
+
+**Q: My polygons are not saving or I can not add a "name".**
+
+A: Make sure the "name" column is filled in and immediately pressing Enter on your keyboard while still selecting the row.
+
+**Q: The application lags/stutters when I'm zoomed in and panning over the image.**
+
+A: This happens because each pan triggers a request for full-resolution tile data from the server. QuPath then tries to paint this large image on the viewer.  This causes some lag at times. It's best to pan while zoomed out and only zoom in once you've decided on which area to inspect.
