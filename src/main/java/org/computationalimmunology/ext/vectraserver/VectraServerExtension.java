@@ -1,0 +1,130 @@
+package org.computationalimmunology.ext.vectraserver;
+
+import org.computationalimmunology.ext.vectraserver.core.VectraServerLog;
+import org.computationalimmunology.ext.vectraserver.core.api.ApiClient;
+import org.computationalimmunology.ext.vectraserver.core.api.ServerGateway;
+import org.computationalimmunology.ext.vectraserver.core.api.ServerUploadGateway;
+import org.computationalimmunology.ext.vectraserver.core.store.SelectedDataStore;
+import org.computationalimmunology.ext.vectraserver.ui.listeners.PolygonMetadataAdder;
+import org.computationalimmunology.ext.vectraserver.ui.listeners.PolygonTracker;
+import org.computationalimmunology.ext.vectraserver.ui.overlays.TileHoverController;
+import org.computationalimmunology.ext.vectraserver.ui.overlays.TileHoverOverlay;
+import org.computationalimmunology.ext.vectraserver.ui.tabBoxes.EnableExtensionCheckbox;
+import org.computationalimmunology.ext.vectraserver.ui.tabs.DatasetSelectorTab;
+import org.computationalimmunology.ext.vectraserver.ui.tabs.PolygonViewerTab;
+import org.computationalimmunology.ext.vectraserver.ui.tabs.ServerConnectionTab;
+
+import javafx.beans.property.BooleanProperty;
+import javafx.scene.Scene;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.Tab;
+import javafx.stage.Stage;
+import qupath.fx.prefs.controlsfx.PropertyItemBuilder;
+import qupath.lib.gui.QuPathGUI;
+import qupath.lib.gui.extensions.QuPathExtension;
+import qupath.lib.gui.prefs.PathPrefs;
+
+public class VectraServerExtension implements QuPathExtension {
+    private static final String EXTENSION_NAME = "Vectra Server Extension";
+    private static final String EXTENSION_DESCRIPTION = "Extension for accessing and editing bioimage-related data from the Immunology Department.";
+    private static final BooleanProperty enableExtensionProperty = PathPrefs.createPersistentPreference(
+			"enableExtension", true);
+    private Stage enableExtensionStage;
+
+
+    @Override
+    public void installExtension(QuPathGUI qupath) {
+        addPreferenceToPane(qupath);
+        addMenuItem(qupath);
+        //qupath.getMenu("Vectra Server", true); // Add new tab to top menu bar
+
+        // fill the detections
+        //qupath.getOverlayOptions().setFillDetections(true);
+
+        // Built once here and injected down, this will be used to retrieve data and images from the server
+        ServerGateway serverGateway = new ServerGateway(ApiClient.getInstance());
+        ServerUploadGateway jsonDataUploadHandler = new ServerUploadGateway(ApiClient.getInstance());
+
+        // Built once and injected down. THis tracks the currently loaded slide and the currently
+        // selected tile, and wires mouse hover/click on the viewer to the tile highlight overlay.
+        SelectedDataStore selectedDataStore = new SelectedDataStore();
+        TileHoverOverlay tileHoverOverlay = new TileHoverOverlay(qupath.getOverlayOptions());
+        TileHoverController tileHoverController = new TileHoverController(selectedDataStore.selectedSlideProperty(), tileHoverOverlay, enableExtensionProperty);
+        tileHoverController.setOnTileClicked(tile -> {
+            if (enableExtensionProperty.get()) {
+            selectedDataStore.setSelectedTile(tile);
+            VectraServerLog.log("Tile clicked: " + tile);
+            }
+        });   // Set the selected tile in the data store when a tile is clicked, in the whole application, not just in the overlay
+
+        // Side bar
+        ServerConnectionTab serverConnectionTab = new ServerConnectionTab();
+        gateTab(serverConnectionTab.addCustomTab(qupath.getAnalysisTabPane()));
+
+        DatasetSelectorTab datasetTab = new DatasetSelectorTab(serverGateway, selectedDataStore, tileHoverController);
+        gateTab(datasetTab.addCustomTab(qupath.getAnalysisTabPane()));
+
+
+            //polygon tracker listener
+        PolygonTracker polygonTracker = new PolygonTracker(enableExtensionProperty);
+        // polygon metadata added
+        PolygonMetadataAdder polygonMetadataAdder = new PolygonMetadataAdder(polygonTracker, selectedDataStore);
+        //polygon viewer tab
+        PolygonViewerTab polygonViewerTab = new PolygonViewerTab(serverGateway, jsonDataUploadHandler, selectedDataStore, polygonTracker);
+        gateTab(polygonViewerTab.addCustomTab(qupath.getAnalysisTabPane()));
+    }
+
+    private void gateTab(Tab tab) {
+        // gate tab in that we make sure it's only clickable when the extension is enabled
+        tab.disableProperty().bind(enableExtensionProperty.not());
+    }
+
+    private void addPreferenceToPane(QuPathGUI qupath) {
+        var propertyItem = new PropertyItemBuilder<>(enableExtensionProperty, Boolean.class)
+				.name("Enable extension")
+				.category("Vectra Server Extension")
+				.description("Enable Vectra Server extension")
+				.build();
+		qupath.getPreferencePane()
+				.getPropertySheet()
+				.getItems()
+				.add(propertyItem);
+	}
+
+    private void addMenuItem(QuPathGUI qupath) {
+		var menu = qupath.getMenu("Extensions>" + EXTENSION_NAME, true);
+		MenuItem menuItem = new MenuItem("Enable/Disable Vectra Server Extension");
+		menuItem.setOnAction(e -> createEnableExtensionStage());
+		///menuItem.disableProperty().bind(enableExtensionProperty.not());
+		menu.getItems().add(menuItem);
+	}
+
+    private void createEnableExtensionStage() {
+        if (enableExtensionStage == null) {
+            enableExtensionStage = new Stage();
+            Scene scene = new Scene(EnableExtensionCheckbox.getInstance());
+            enableExtensionStage.initOwner(QuPathGUI.getInstance().getStage());
+            enableExtensionStage.setTitle("Enable Vectra Server Extension");
+            enableExtensionStage.setScene(scene);
+            enableExtensionStage.setResizable(false);
+            enableExtensionStage.setMinWidth(320);
+            enableExtensionStage.setMinHeight(120);
+        }
+        enableExtensionStage.show();
+        enableExtensionStage.toFront();
+    }
+
+    @Override
+    public String getName() {
+        return EXTENSION_NAME;
+    }
+
+    @Override
+    public String getDescription() {
+        return EXTENSION_DESCRIPTION;
+    }
+
+    public static BooleanProperty enableExtensionProperty() {
+        return enableExtensionProperty;
+    }
+}
