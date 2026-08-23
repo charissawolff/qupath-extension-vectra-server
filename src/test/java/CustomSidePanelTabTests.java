@@ -1,10 +1,9 @@
-import org.computational_immunology.ext.ImmuNet.core.models.Dimensions;
-import org.computational_immunology.ext.ImmuNet.ui.tabs.CustomSidePanelTab;
 import org.junit.jupiter.api.Test;
 
 import javafx.scene.control.Button;
 import org.testfx.framework.junit5.ApplicationTest;
-
+import org.computationalimmunology.ext.vectraserver.core.models.Dimensions;
+import org.computationalimmunology.ext.vectraserver.ui.tabs.CustomSidePanelTab;
 import org.junit.jupiter.api.Assertions;
 
 class CustomSidePanelTabTests extends ApplicationTest {

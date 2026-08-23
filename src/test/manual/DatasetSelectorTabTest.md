@@ -5,7 +5,7 @@
 ## Test 01: Expected normal walkthrough test
 
 --------------------------------------------------------------------------------------------------------------------------------------
-**Start state:** open QuPath through the terminal with the ImmuNet extension installed. The user must have setup the server connection!
+**Start state:** open QuPath through the terminal with the Vectra Server extension installed. The user must have setup the server connection!
 
 **Script:** click on side-panel tab with name ‘Image selector’  
 **Expected outcome:** a panel is visible with the layout visualised in `DatasetSelectorTab_Fig1.png`.
@@ -36,7 +36,7 @@
 ## Test 02: No server connection
 
 --------------------------------------------------------------------------------------------------------------------------------------
-**Start state:** open QuPath through the terminal with the ImmuNet extension installed. The user must NOT have setup the server connection!
+**Start state:** open QuPath through the terminal with the Vectra Server extension installed. The user must NOT have setup the server connection!
 
 **Script:** click on side-panel tab with name ‘Image selector’  
 **Expected outcome:** a panel is visible with the layout visualised in `DatasetSelectorTab_Fig1.png`.

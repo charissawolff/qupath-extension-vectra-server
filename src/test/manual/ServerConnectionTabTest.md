@@ -6,7 +6,7 @@
 
 --------------------------------------------------------------------------------------------------------------------------------------
 
-**Start state:** open QuPath through the terminal with the ImmuNet extension installed. The user must NOT have entered their credentials in a previous run!
+**Start state:** open QuPath through the terminal with the Vectra Server extension installed. The user must NOT have entered their credentials in a previous run!
 
 **Script:** click on side-panel tab with name ‘Server Connection’.
 **Expected outcome:** a panel is visible with 5 _empty_ text fields: Hostname, User, Password, Database User, Database Pass. Additionally, a button with 'Connect' is visible. 
@@ -19,7 +19,7 @@
 ## Test 02: Expected normal walkthrough test - Returning user
 
 --------------------------------------------------------------------------------------------------------------------------------------
-**Start state:** open QuPath through the terminal with the ImmuNet extension installed. The user must have entered their credentials in a previous run!
+**Start state:** open QuPath through the terminal with the Vectra Server extension installed. The user must have entered their credentials in a previous run!
 
 **Script:** click on side-panel tab with name ‘Server Connection’.
 **Expected outcome:** a panel is visible with 5 _filled_ text fields: Hostname, User, Password, Database User, Database Pass. The fields Password and Database Pass should show dots instead of characters inside the textfield. Additionally, a button with 'Connect' is visible. 
@@ -32,7 +32,7 @@
 ## Test 03: Empty fields
 
 --------------------------------------------------------------------------------------------------------------------------------------
-**Start state:** open QuPath through the terminal with the ImmuNet extension installed. The user must NOT have entered their credentials in a previous run!
+**Start state:** open QuPath through the terminal with the Vectra Server extension installed. The user must NOT have entered their credentials in a previous run!
 
 **Script:** click on side-panel tab with name ‘Server Connection’.
 **Expected outcome:** a panel is visible with 5 _empty_ text fields: Hostname, User, Password, Database User, Database Pass. The fields Password and Database Pass should show dots instead of characters inside the textfield. Additionally, a button with 'Connect' is visible. 
@@ -45,7 +45,7 @@
 ## Test 04: Connection failed
 
 --------------------------------------------------------------------------------------------------------------------------------------
-**Start state:** open QuPath through the terminal with the ImmuNet extension installed. The user must NOT have entered their credentials in a previous run!
+**Start state:** open QuPath through the terminal with the Vectra Server extension installed. The user must NOT have entered their credentials in a previous run!
 
 **Script:** click on side-panel tab with name ‘Server Connection’.
 **Expected outcome:** a panel is visible with 5 _empty_ text fields: Hostname, User, Password, Database User, Database Pass. The fields Password and Database Pass should show dots instead of characters inside the textfield. Additionally, a button with 'Connect' is visible. 
