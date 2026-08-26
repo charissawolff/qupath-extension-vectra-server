@@ -107,9 +107,10 @@ public class NewPolygonViewerBox extends VBox {
                     setGraphic(null);
                     return;
                 }
-                PathObject row = getTableView().getItems().get(getIndex());
-                button.setText(row.isLocked() ? "Added" : "Add");
-                button.setDisable(row.isLocked());
+                //PathObject row = getTableView().getItems().get(getIndex());
+                //button.setText(row.isLocked() ? "Added" : "Add");
+               // button.setDisable(row.isLocked());
+               button.setText("Add");
                 setGraphic(button);
             }
         });

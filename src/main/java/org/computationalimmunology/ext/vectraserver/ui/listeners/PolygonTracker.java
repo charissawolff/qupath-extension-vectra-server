@@ -1,6 +1,9 @@
 package org.computationalimmunology.ext.vectraserver.ui.listeners;
 
 import java.awt.image.BufferedImage;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.computationalimmunology.ext.vectraserver.core.VectraServerLog;
 
@@ -26,6 +29,7 @@ public class PolygonTracker implements PathObjectHierarchyListener  {
     PathObjectHierarchy hierarchy;
     private final ObservableList<PathObject> newAnnotations = FXCollections.observableArrayList();
     private final ObservableBooleanValue enabled;
+    private Set<PathObject> knownObjects = new HashSet<>(); // necessary to track the objects added by pixel classifier as they dont trigger an "added" event
 
     public PolygonTracker(ObservableBooleanValue enabled) {
         this.enabled = enabled;
@@ -36,6 +40,7 @@ public class PolygonTracker implements PathObjectHierarchyListener  {
         if (viewer.getImageData() != null) {
             this.hierarchy = viewer.getImageData().getHierarchy();
             this.hierarchy.addListener(this);
+            this.knownObjects = this.hierarchy == null ? new HashSet<>() : new HashSet<>(this.hierarchy.getAllObjects(false));
         }
         //if the viewer changes, we need to update the hierarchy listener AND the newAnnotations list 
         ReadOnlyObjectProperty<ImageData<BufferedImage>> imageDataProperty = viewer.imageDataProperty();
@@ -61,39 +66,32 @@ public class PolygonTracker implements PathObjectHierarchyListener  {
         //change the newAnnotations list to only contain annotations that are still in the hierarchy, in case the user deleted some of them
         //but that it wasn't registered (such as deleting from hierarchy tab)
         newAnnotations.removeIf(obj -> obj.getParent() == null);
-        VectraServerLog.log("Hierarchy changed: " + event);
-        //filter for polygon changes and log them
-        if (event.getEventType() == PathObjectHierarchyEvent.HierarchyEventType.ADDED) {
-            VectraServerLog.log("Polygon added: " + event);
-        } else if (event.getEventType() == PathObjectHierarchyEvent.HierarchyEventType.REMOVED) {
-            VectraServerLog.log("Polygon removed: " + event);
-        } else if (event.getEventType() == PathObjectHierarchyEvent.HierarchyEventType.CHANGE_MEASUREMENTS) {
-            VectraServerLog.log("Polygon changed: " + event);
-        }
+        VectraServerLog.log("PathObjectHierarchyEvent changed: " + event);
         if (event.getChangedObjects() != null){ 
             VectraServerLog.log("Polygon class changed: " + event.getChangedObjects());
         }
-        
+        // if the user added, deleted or did "other structure changed", this will thus consist of manually adding polygons or via for example pixel classifier
+        // we compare what was there before and what is there now
+        if (event.isStructureChangeEvent()) {
+            Set<PathObject> current = new HashSet<>(hierarchy.getAllObjects(false));
 
-        // any newly drawn annotation gets tracked so it can later be sent to the server, except points
-        if (event.getEventType() == PathObjectHierarchyEvent.HierarchyEventType.ADDED) {
-            for (PathObject addedObject : event.getChangedObjects()) {
-                if (!addedObject.getROI().isPoint()) {
-                    VectraServerLog.log("Tracking new polygon annotation: " + addedObject);
-                    VectraServerLog.log("Tracking new polygon annotation: " + addedObject.getROI().getClass().getSimpleName());
-                    VectraServerLog.log("It had the type of " + event.getEventType());
-                    newAnnotations.remove(addedObject); //remove it first in case it was already there, to avoid duplicates
-                    if (!newAnnotations.contains(addedObject)) {
-                        newAnnotations.add(addedObject);
-                    }
-                }
-            }
-        }
-        //if we removed a polygon, we want to remove it from the newAnnotations list so that we don't send it to the server
-        if (event.getEventType() == PathObjectHierarchyEvent.HierarchyEventType.REMOVED) {
-            for (PathObject removedObject : event.getChangedObjects()) {
-                    newAnnotations.remove(removedObject);
+            Set<PathObject> added = new HashSet<>(current);
+            added.removeAll(knownObjects);
+            for (PathObject addedObject : added) {
+                //if they have ID, skip, as this means they were already on the server, or if they are a point ignore
+                if (addedObject.getROI() != null && !addedObject.getROI().isPoint()
+                        && addedObject.getMetadata().get("id") == null) {
+                    VectraServerLog.log("Tracking new annotation: " + addedObject);
+                    newAnnotations.remove(addedObject); // guard against dupes, harmless if absent
+                    newAnnotations.add(addedObject);
                 
+            }
+
+            Set<PathObject> removed = new HashSet<>(knownObjects);
+            removed.removeAll(current);
+            newAnnotations.removeAll(removed);
+
+            knownObjects = current;
             }
         }
     }
