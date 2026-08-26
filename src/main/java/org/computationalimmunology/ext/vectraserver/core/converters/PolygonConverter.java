@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.awt.geom.AffineTransform;
 
+import org.computationalimmunology.ext.vectraserver.core.VectraServerLog;
 import org.computationalimmunology.ext.vectraserver.core.models.AnnotationPolygon;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -45,6 +46,7 @@ public class PolygonConverter {
         try{
             pathObjects = GsonTools.parseObjectsFromGeoJSON(element);
         } catch (Exception e) {
+           VectraServerLog.log("Failed to parse GeoJSON: " + e.getMessage(), e);
             throw new RuntimeException("Failed to parse GeoJSON: " + e.getMessage(), e);
         }
         PathObject polygonPathObject = pathObjects.get(0); // Assuming only one polygon is present (should be true for our use case)
@@ -75,7 +77,8 @@ public class PolygonConverter {
 
     public static AnnotationPolygon fromPathObject(PathObject pathObject, double dx, double dy) {
         Geometry geometry = pathObject.getROI().getGeometry();
-        if (!(geometry instanceof org.locationtech.jts.geom.Polygon) && !(geometry instanceof org.locationtech.jts.geom.MultiPolygon)) {
+        if (!(geometry instanceof org.locationtech.jts.geom.Polygon) && !(geometry instanceof org.locationtech.jts.geom.MultiPolygon)
+        && !(geometry instanceof org.locationtech.jts.geom.LineString) && !(geometry instanceof org.locationtech.jts.geom.MultiLineString)) {
             throw new IllegalArgumentException("ROI geometry is not a single Polygon or MultiPolygon: " + geometry.getGeometryType());
         }
 
@@ -130,7 +133,7 @@ public class PolygonConverter {
             JSONObject jsonPolygon = jsonArray.getJSONObject(i);
 
             String type = jsonPolygon.optString("type", "Polygon");
-            if (!Arrays.asList("Polygon", "MultiPolygon").contains(type)) {
+            if (!Arrays.asList("Polygon", "MultiPolygon", "LineString", "MultiLineString").contains(type)) {
                 type = "Polygon";
             }
 
@@ -138,16 +141,20 @@ public class PolygonConverter {
                     ? jsonPolygon.getJSONArray("coordinates")
                     : jsonPolygon.getJSONArray("vertices");
 
-            String shape = outerShape(rawCoordinates);
             JSONArray coordinates;
-            if (shape.equals("flat")) {
-                // wrap in an extra array so a single ring is valid GeoJSON Polygon coordinates
-                coordinates = new JSONArray();
-                coordinates.put(rawCoordinates);
-            } else {
+            if ("LineString".equals(type) || "MultiLineString".equals(type)) {
+                // If it's a linestring, we know it's correct shape
                 coordinates = rawCoordinates;
+            } else {
+                String shape = outerShape(rawCoordinates);
+                if (shape.equals("flat")) {
+                    coordinates = new JSONArray();
+                    coordinates.put(rawCoordinates);
+                } else {
+                    coordinates = rawCoordinates;
+                }
+                closeRingsIfNeeded(coordinates, type);
             }
-            closeRingsIfNeeded(coordinates, type);
 
             AnnotationPolygon polygon = new AnnotationPolygon(
                 jsonPolygon.optString("id", jsonPolygon.optString("_id", null)),

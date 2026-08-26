@@ -128,7 +128,11 @@ public class AnnotationPointConverter {
                 VectraServerLog.error("No tile metadata found for tile code: {}, skipping this annotation", point.getTile());
                 continue;
             }
-            pathObjects.add(toPathObject(point, tileMetadata));
+            try {
+                pathObjects.add(toPathObject(point, tileMetadata));
+            } catch (RuntimeException rte){
+                continue;
+            }
         }
         return pathObjects;
     }

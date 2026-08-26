@@ -28,7 +28,9 @@ public class AddPolygonCommand extends AbstractAsyncCommand<JSONObject> {
     //now rest of information to get format we needed: 
         try {
             progressReporter.accept("Uploading polygon data...");
-            JSONObject response = dataUploadHandler.uploadPolygonAnnotations(new JSONArray(List.of(polygonJson)));
+            JSONArray polygonAnnotations = new JSONArray(List.of(polygonJson));
+            VectraServerLog.log("saving new polygon" + polygonAnnotations);
+            JSONObject response = dataUploadHandler.uploadPolygonAnnotations(polygonAnnotations);
             return response;
         } catch (Exception e) {
             throw new RuntimeException("Could not upload polygon data", e);

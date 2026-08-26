@@ -31,8 +31,12 @@ public class LoadPolygonCommand extends AbstractAsyncCommand<List<AnnotationPoly
         double dy = selectedDataStore.getDy();
         List<PathObject> polygonPathObjects = new ArrayList<>();
         for (AnnotationPolygon p: polygons) {
+            try {
             polygonPathObjects.add(PolygonConverter.toPathObject(p, dx, dy));
             VectraServerLog.log("Fetched polygon with ID: " + p.getId() + " for dataset: " + selectedDataStore.getSelectedSlide().getDatasetName() + ", slide: " + selectedDataStore.getSelectedSlide().getSlideName());
+            } catch (RuntimeException e) {
+                VectraServerLog.error("Skipping polygon with ID: " + p.getId() + ": failed to convert to PathObject", e);
+            }
         }
         AttachPathObjectsToViewerCommand attachCommand = new AttachPathObjectsToViewerCommand(polygonPathObjects);
         attachCommand.execute();
