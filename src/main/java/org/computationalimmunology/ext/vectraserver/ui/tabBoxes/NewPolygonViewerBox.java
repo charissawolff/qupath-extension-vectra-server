@@ -107,10 +107,10 @@ public class NewPolygonViewerBox extends VBox {
                     setGraphic(null);
                     return;
                 }
-                //PathObject row = getTableView().getItems().get(getIndex());
-                //button.setText(row.isLocked() ? "Added" : "Add");
-               // button.setDisable(row.isLocked());
-               button.setText("Add");
+                PathObject row = getTableView().getItems().get(getIndex());
+                boolean uploaded = row.getMetadata().get("uploaded") != null;
+                button.setText(uploaded ? "Added" : "Add");
+                button.setDisable(uploaded);
                 setGraphic(button);
             }
         });
@@ -141,8 +141,16 @@ public class NewPolygonViewerBox extends VBox {
         AddPolygonCommand command = new AddPolygonCommand(polygonJson, dataUploadHandler);
         command.build();
         //visible on screen and not editable anymore
-        command.setOnDone(() -> { polygon.setLocked(true); tableView.refresh(); });
-        command.setOnFailed(tableView::refresh);
+        command.setOnDone(() -> { 
+            polygon.setLocked(true); tableView.refresh(); 
+            polygon.getMetadata().put("uploaded", "true");
+            tableView.refresh();
+        
+        });
+        command.setOnFailed(() -> { 
+            button.setDisable(false); 
+            tableView.refresh(); 
+        });
         command.start();
     }
 }
