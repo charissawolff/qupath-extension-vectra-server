@@ -64,3 +64,18 @@ dependencies {
 
 }
 
+// Ensure the build command triggers the shadow jar
+tasks.named('build') {
+    dependsOn tasks.named('shadowJar')
+}
+
+// Disable the standard jar so only the Shadow jar is created
+tasks.named('jar') {
+    enabled = false
+}
+
+// Remove the '-all' suffix so the file looks like a standard extension jar
+tasks.named('shadowJar') {
+    archiveClassifier.set('')
+}
+
