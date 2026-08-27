@@ -82,21 +82,25 @@ public class PolygonConverter {
             throw new IllegalArgumentException("ROI geometry is not a single Polygon or MultiPolygon: " + geometry.getGeometryType());
         }
 
-        PathObject transformedPathObject = PathObjectTools.transformObject(pathObject, AffineTransform.getScaleInstance(dx, dy), true, false);
+        try{
+            PathObject transformedPathObject = PathObjectTools.transformObject(pathObject, AffineTransform.getScaleInstance(dx, dy), true, false);
 
-        String json = GsonTools.getInstance().toJson(transformedPathObject);
-        JsonObject geometryJson = JsonParser.parseString(json).getAsJsonObject().getAsJsonObject("geometry");
-        JSONArray coordinates = new JSONArray(geometryJson.getAsJsonArray("coordinates").toString());
-        String type = geometryJson.get("type").getAsString();
+            String json = GsonTools.getInstance().toJson(transformedPathObject);
+            JsonObject geometryJson = JsonParser.parseString(json).getAsJsonObject().getAsJsonObject("geometry");
+            JSONArray coordinates = new JSONArray(geometryJson.getAsJsonArray("coordinates").toString());
+            String type = geometryJson.get("type").getAsString();
 
-        String id = (String) transformedPathObject.getMetadata().get("id");
-        //read directly from transformedPathObject metadata/name, since name can be changed by user when user adds a new polygon
-        String name = transformedPathObject.getName();
-        String dataset = (String) transformedPathObject.getMetadata().get("dataset");
-        String slide = (String) transformedPathObject.getMetadata().get("slide");
-        String created = (String) transformedPathObject.getMetadata().get("created");
+            String id = (String) transformedPathObject.getMetadata().get("id");
+            //read directly from transformedPathObject metadata/name, since name can be changed by user when user adds a new polygon
+            String name = transformedPathObject.getName();
+            String dataset = (String) transformedPathObject.getMetadata().get("dataset");
+            String slide = (String) transformedPathObject.getMetadata().get("slide");
+            String created = (String) transformedPathObject.getMetadata().get("created");
 
-        return new AnnotationPolygon(id, coordinates, type, name, dataset, slide, created);
+            return new AnnotationPolygon(id, coordinates, type, name, dataset, slide, created);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Can not find all necessary metadata to parse into annottaionPolygon");
+            }
     }
 
     /**
@@ -130,42 +134,46 @@ public class PolygonConverter {
     public static List<AnnotationPolygon> fromJsonArray(JSONArray jsonArray) {
         List<AnnotationPolygon> polygons = new ArrayList<>();
         for (int i = 0; i < jsonArray.length(); i++) {
-            JSONObject jsonPolygon = jsonArray.getJSONObject(i);
+            try{ 
+                JSONObject jsonPolygon = jsonArray.getJSONObject(i);
 
-            String type = jsonPolygon.optString("type", "Polygon");
-            if (!Arrays.asList("Polygon", "MultiPolygon", "LineString", "MultiLineString").contains(type)) {
-                type = "Polygon";
-            }
-
-            JSONArray rawCoordinates = jsonPolygon.has("coordinates")
-                    ? jsonPolygon.getJSONArray("coordinates")
-                    : jsonPolygon.getJSONArray("vertices");
-
-            JSONArray coordinates;
-            if ("LineString".equals(type) || "MultiLineString".equals(type)) {
-                // If it's a linestring, we know it's correct shape
-                coordinates = rawCoordinates;
-            } else {
-                String shape = outerShape(rawCoordinates);
-                if (shape.equals("flat")) {
-                    coordinates = new JSONArray();
-                    coordinates.put(rawCoordinates);
-                } else {
-                    coordinates = rawCoordinates;
+                String type = jsonPolygon.optString("type", "Polygon");
+                if (!Arrays.asList("Polygon", "MultiPolygon", "LineString", "MultiLineString").contains(type)) {
+                    type = "Polygon";
                 }
-                closeRingsIfNeeded(coordinates, type);
-            }
 
-            AnnotationPolygon polygon = new AnnotationPolygon(
-                jsonPolygon.optString("id", jsonPolygon.optString("_id", null)),
-                coordinates,
-                type,
-                jsonPolygon.optString("name", null),
-                jsonPolygon.optString("dataset", null),
-                jsonPolygon.optString("slide", null),
-                jsonPolygon.optString("created", null)
-            );
-            polygons.add(polygon);
+                JSONArray rawCoordinates = jsonPolygon.has("coordinates")
+                        ? jsonPolygon.getJSONArray("coordinates")
+                        : jsonPolygon.getJSONArray("vertices");
+
+                JSONArray coordinates;
+                if ("LineString".equals(type) || "MultiLineString".equals(type)) {
+                    // If it's a linestring, we know it's correct shape
+                    coordinates = rawCoordinates;
+                } else {
+                    String shape = outerShape(rawCoordinates);
+                    if (shape.equals("flat")) {
+                        coordinates = new JSONArray();
+                        coordinates.put(rawCoordinates);
+                    } else {
+                        coordinates = rawCoordinates;
+                    }
+                    closeRingsIfNeeded(coordinates, type);
+                }
+
+                AnnotationPolygon polygon = new AnnotationPolygon(
+                    jsonPolygon.optString("id", jsonPolygon.optString("_id", null)),
+                    coordinates,
+                    type,
+                    jsonPolygon.optString("name", null),
+                    jsonPolygon.optString("dataset", null),
+                    jsonPolygon.optString("slide", null),
+                    jsonPolygon.optString("created", null)
+                );
+                polygons.add(polygon);
+            } catch (Exception e) {
+                VectraServerLog.log("Skipping malformed polygon at index " + i, e);
+            }
         }
         return polygons;
     }
