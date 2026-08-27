@@ -134,23 +134,29 @@ public class NewPolygonViewerBox extends VBox {
     private void handleAddClicked(PathObject polygon, Button button) {
         button.setDisable(true);
         VectraServerLog.log("Adding polygon: " + polygon.getName() + " which is:" + polygon);
-        AnnotationPolygon polygonData = PolygonConverter.fromPathObject(polygon, selectedDataStore.getDx(), selectedDataStore.getDy());
-        VectraServerLog.log("Polygon from PathObject is " + polygonData);
-        JSONObject polygonJson = PolygonConverter.toJSONObject(polygonData);
-        VectraServerLog.log("Polygon JSON is " + polygonJson);
-        AddPolygonCommand command = new AddPolygonCommand(polygonJson, dataUploadHandler);
-        command.build();
-        //visible on screen and not editable anymore
-        command.setOnDone(() -> { 
-            polygon.setLocked(true); tableView.refresh(); 
-            polygon.getMetadata().put("uploaded", "true");
-            tableView.refresh();
-        
-        });
-        command.setOnFailed(() -> { 
-            button.setDisable(false); 
-            tableView.refresh(); 
-        });
-        command.start();
+        try {
+            AnnotationPolygon polygonData = PolygonConverter.fromPathObject(polygon, selectedDataStore.getDx(), selectedDataStore.getDy());
+            VectraServerLog.log("Polygon from PathObject is " + polygonData);
+            JSONObject polygonJson = PolygonConverter.toJSONObject(polygonData);
+            VectraServerLog.log("Polygon JSON is " + polygonJson);
+            AddPolygonCommand command = new AddPolygonCommand(polygonJson, dataUploadHandler);
+            command.build();
+            //visible on screen and not editable anymore
+            command.setOnDone(() -> { 
+                polygon.setLocked(true); tableView.refresh(); 
+                polygon.getMetadata().put("uploaded", "true");
+                tableView.refresh();
+            
+            });
+            command.setOnFailed(() -> { 
+                button.setDisable(false); 
+                tableView.refresh(); 
+            });
+            command.start();
+        } catch (IllegalArgumentException iae) {
+            VectraServerLog.log("Could not save polygon because missing/ incorrect information provided: " + iae);
+        } catch (Exception e) {
+            VectraServerLog.log("Could not save polygon:" + e);
+        }
     }
 }

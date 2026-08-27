@@ -82,21 +82,25 @@ public class PolygonConverter {
             throw new IllegalArgumentException("ROI geometry is not a single Polygon or MultiPolygon: " + geometry.getGeometryType());
         }
 
-        PathObject transformedPathObject = PathObjectTools.transformObject(pathObject, AffineTransform.getScaleInstance(dx, dy), true, false);
+        try{
+            PathObject transformedPathObject = PathObjectTools.transformObject(pathObject, AffineTransform.getScaleInstance(dx, dy), true, false);
 
-        String json = GsonTools.getInstance().toJson(transformedPathObject);
-        JsonObject geometryJson = JsonParser.parseString(json).getAsJsonObject().getAsJsonObject("geometry");
-        JSONArray coordinates = new JSONArray(geometryJson.getAsJsonArray("coordinates").toString());
-        String type = geometryJson.get("type").getAsString();
+            String json = GsonTools.getInstance().toJson(transformedPathObject);
+            JsonObject geometryJson = JsonParser.parseString(json).getAsJsonObject().getAsJsonObject("geometry");
+            JSONArray coordinates = new JSONArray(geometryJson.getAsJsonArray("coordinates").toString());
+            String type = geometryJson.get("type").getAsString();
 
-        String id = (String) transformedPathObject.getMetadata().get("id");
-        //read directly from transformedPathObject metadata/name, since name can be changed by user when user adds a new polygon
-        String name = transformedPathObject.getName();
-        String dataset = (String) transformedPathObject.getMetadata().get("dataset");
-        String slide = (String) transformedPathObject.getMetadata().get("slide");
-        String created = (String) transformedPathObject.getMetadata().get("created");
+            String id = (String) transformedPathObject.getMetadata().get("id");
+            //read directly from transformedPathObject metadata/name, since name can be changed by user when user adds a new polygon
+            String name = transformedPathObject.getName();
+            String dataset = (String) transformedPathObject.getMetadata().get("dataset");
+            String slide = (String) transformedPathObject.getMetadata().get("slide");
+            String created = (String) transformedPathObject.getMetadata().get("created");
 
-        return new AnnotationPolygon(id, coordinates, type, name, dataset, slide, created);
+            return new AnnotationPolygon(id, coordinates, type, name, dataset, slide, created);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Can not find all necessary metadata to parse into annottaionPolygon");
+            }
     }
 
     /**
